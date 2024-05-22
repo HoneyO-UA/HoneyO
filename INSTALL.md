@@ -72,11 +72,12 @@ cd scripts
 ```
 
 
-
 ## Pypi server to expose required python packages
 
 ```bash
-weaw
+helm install pypi-server charts/pypi-server --namespace utils --create-namespace -f values/pypi-server-values.yaml
 ```
+
+## ok
 
 
