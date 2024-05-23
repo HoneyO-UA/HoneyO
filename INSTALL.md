@@ -23,7 +23,7 @@ metadata:
   name: cluster-pool
 spec:
   addresses:
-  - "10.255.37.28-10.255.37.29" # The ip range to be assigned
+  - "10.255.37.27-10.255.37.29" # The ip range to be assigned
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
