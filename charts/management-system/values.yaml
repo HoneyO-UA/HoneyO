@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 1 # If auto scale disabled
 
 podSecurityContext: {}
   # fsGroup: 2000
