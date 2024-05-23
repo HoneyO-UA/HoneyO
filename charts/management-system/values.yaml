@@ -57,12 +57,12 @@ mongodb:
     rootPassword: "CtqcwT2RJV7XaPDALeKgfAR27gtE7fVCL6Ax3fumyLJgzS3Lh3Nffrgz2s"
     usernames: ["ms"]
     passwords: ["WNtmL3sVtHep7CSerrd2UbquuPQqmxunJJwS7Ar4oNXCBrAY5ef3BpCz2c"]
-    databases: ["ms"]
-  
+    databases: ["spawner"]
+
   architecture: replicaset
   arbiter:
     enabled: false
-  
+
   replicaCount: 2
   externalAccess:
     enabled: true
@@ -85,31 +85,31 @@ api:
   service:
     type: ClusterIP
     port: 9000
-  
+
   image:
-    repository: nginx
+    repository: "10.255.37.57:30002/ms/api"
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"
-    
+
   podLabels: {}
   podAnnotations: {}
   imagePullSecrets: []
   env:
     - name: MONGODB_URL
-      value: "mongodb://ms:WNtmL3sVtHep7CSerrd2UbquuPQqmxunJJwS7Ar4oNXCBrAY5ef3BpCz2c@10.255.37.28:27017,10.255.37.29:27017/ms"
+      value: "mongodb://ms:WNtmL3sVtHep7CSerrd2UbquuPQqmxunJJwS7Ar4oNXCBrAY5ef3BpCz2c@10.255.37.28:27017,10.255.37.29:27017/spawner"
     - name: RABBITMQ_URL
-      value: "amqp://user:uzwHr6vFsBUoLfAtzQKbZnesqcBkxisH@spawner-rabbitmq/"
+      value: "amqp://user:uzwHr6vFsBUoLfAtzQKbZnesqcBkxisH@ms-rabbitmq/"
 
-  livenessProbe:
-    httpGet:
-      path: /
-      port: http
-  readinessProbe:
-    httpGet:
-      path: /
-      port: http
-  
+  livenessProbe: {}
+  #  httpGet:
+  #    path: /
+  #    port: http
+  readinessProbe: {}
+  #  httpGet:
+  #    path: /
+  #    port: http
+
   volumeMounts: []
   volumes: []
 
