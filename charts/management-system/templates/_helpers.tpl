@@ -60,3 +60,8 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{- define "management-system.api" -}}
+  {{- printf "%s-api" (include "management-system.fullname" .) -}}
+{{- end -}}

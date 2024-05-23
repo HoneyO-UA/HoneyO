@@ -1,6 +1,6 @@
 # HoneyO Installation
 
-## Utils packages
+## 1. Utils packages
 
 To correctly install the HoneyO solution, certain services and packages must be pre-installed. You have the flexibility to install these packages manually or use different software, as long as they meet the requirements of the HoneyO solution. For convenience, we provide a Helm chart that will automatically install all the necessary pre-requisites.
 
@@ -72,12 +72,16 @@ cd scripts
 ```
 
 
-## Pypi server to expose required python packages
+## 2. Pypi server to expose required python packages
 
 ```bash
 helm install pypi-server charts/pypi-server --namespace utils --create-namespace -f values/pypi-server-values.yaml
 ```
 
-## ok
+## 3. Management System
+
+```bash
+
+```
 
 
