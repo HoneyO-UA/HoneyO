@@ -5,15 +5,15 @@ metadata:
   labels:
     {{- include "management-system.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.api.service.type }}
+  type: {{ .Values.k8sWorker.service.type }}
   ports:
-    - port: {{ .Values.api.service.port }}
-      {{- if contains "NodePort" .Values.api.service.type }}
-      nodePort: {{ .Values.api.service.nodePort }}
+    - port: {{ .Values.k8sWorker.service.port }}
+      {{- if contains "NodePort" .Values.k8sWorker.service.type }}
+      nodePort: {{ .Values.k8sWorker.service.nodePort }}
       {{- end }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
     {{- include "management-system.selectorLabels" . | nindent 4 }}
-    component: {{ .Values.api.name }}
+    component: {{ .Values.k8sWorker.name }}

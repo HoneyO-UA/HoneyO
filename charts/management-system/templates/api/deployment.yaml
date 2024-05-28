@@ -45,10 +45,11 @@ spec:
             - name: http
               containerPort: {{ .Values.api.service.port }}
               protocol: TCP
-          {{- with .Values.api.env }}
           env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - name: MONGODB_URL
+              value: 'mongodb://{{ first .Values.mongodb.auth.usernames }}:{{ first .Values.mongodb.auth.passwords }}@{{ join "," .Values.mongodb.externalAccess.service.loadBalancerIPs }}/{{ first .Values.mongodb.auth.databases }}'
+            - name: RABBITMQ_URL
+              value: "amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq/"
           {{- with .Values.api.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

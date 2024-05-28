@@ -35,9 +35,9 @@ serviceAccount:
   name: ""
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
@@ -54,9 +54,9 @@ mongodb:
   auth:
     enabled: true
     rootUser: root
-    rootPassword: "CtqcwT2RJV7XaPDALeKgfAR27gtE7fVCL6Ax3fumyLJgzS3Lh3Nffrgz2s"
+    rootPassword: ""
     usernames: ["ms"]
-    passwords: ["WNtmL3sVtHep7CSerrd2UbquuPQqmxunJJwS7Ar4oNXCBrAY5ef3BpCz2c"]
+    passwords: ["ms"]
     databases: ["spawner"]
 
   architecture: replicaset
@@ -68,26 +68,23 @@ mongodb:
     enabled: true
     service:
       type: LoadBalancer
-      loadBalancerIPs:
-        - 10.255.37.28
-        - 10.255.37.29
-
+      loadBalancerIPs: []
 
 rabbitmq:
   auth:
     username: "user"
-    password: "uzwHr6vFsBUoLfAtzQKbZnesqcBkxisH"
+    password: "rabbitmq"
     securePassword: true
-
 
 api:
   name: api
   service:
-    type: ClusterIP
+    type: NodePort
     port: 9000
+    nodePort: 32000
 
   image:
-    repository: "10.255.37.57:30002/ms/api"
+    repository: ""
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"
@@ -95,23 +92,57 @@ api:
   podLabels: {}
   podAnnotations: {}
   imagePullSecrets: []
-  env:
-    - name: MONGODB_URL
-      value: "mongodb://ms:WNtmL3sVtHep7CSerrd2UbquuPQqmxunJJwS7Ar4oNXCBrAY5ef3BpCz2c@10.255.37.28:27017,10.255.37.29:27017/spawner"
-    - name: RABBITMQ_URL
-      value: "amqp://user:uzwHr6vFsBUoLfAtzQKbZnesqcBkxisH@ms-rabbitmq/"
 
   livenessProbe: {}
-  #  httpGet:
-  #    path: /
-  #    port: http
   readinessProbe: {}
-  #  httpGet:
-  #    path: /
-  #    port: http
 
   volumeMounts: []
   volumes: []
 
 
+k8sWorker:
+  name: "k8s-worker"
+  service:
+    type: ClusterIP
+    port: 9000
+
+  image:
+    repository: ""
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+  podLabels: {}
+  podAnnotations: {}
+  imagePullSecrets: []
+
+  livenessProbe: {}
+  readinessProbe: {}
+
+  volumeMounts: []
+  volumes: []
+
+
+spoa:
+  name: spoa
+  service:
+    type: NodePort
+    port: 9999
+    nodePort: 32009
+
+  image:
+    repository: ""
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+  podLabels: {}
+  podAnnotations: {}
+  imagePullSecrets: []
+  
+  livenessProbe: {}
+  readinessProbe: {}
+
+  volumeMounts: []
+  volumes: []
 

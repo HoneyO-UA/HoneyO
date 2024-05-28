@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "management-system.api" . }}
+  labels:
+    {{- include "management-system.labels" . | nindent 4 }}
+    component: {{ .Values.spoa.name }}
+    app.kubernetes.io/component: {{ .Values.spoa.name }}
+spec:
+  {{- if not ((.Values.spoa.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.spoa.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "management-system.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.spoa.name }}
+  template:
+    metadata:
+      {{- with .Values.spoa.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "management-system.labels" . | nindent 8 }}
+        component: {{ .Values.spoa.name }}
+        app.kubernetes.io/component: {{ .Values.spoa.name }}
+        {{- with .Values.spoa.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.spoa.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "management-system.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.spoa.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.spoa.name }}"
+          securityContext:
+            {{- toYaml ((.Values.spoa.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.spoa.image.repository }}:{{ .Values.spoa.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.spoa.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.spoa.service.port }}
+              protocol: TCP
+          env:
+            - name: API_URL
+              value: "http://{{ .Release.Name }}-{{ .Values.api.name }}:{{ .Values.api.service.port }}"
+          {{- with .Values.spoa.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.spoa.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.spoa.resources) | default .Values.resources) | nindent 12 }}
+          {{- with .Values.spoa.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.spoa.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.spoa.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.spoa.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.spoa.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

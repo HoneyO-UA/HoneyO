@@ -1,0 +1,60 @@
+CHART NAME: {{ .Chart.Name }}
+CHART VERSION: {{ .Chart.Version }}
+APP VERSION: {{ .Chart.AppVersion }}
+
+Get the list of pods by executing:
+  kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Access the pod you want to debug by executing
+  kubectl exec --namespace {{ .Release.Namespace }} -ti <NAME OF THE POD> -- bash
+
+
+Available Services
+*************************************************************************************************************************************
+RabbitMQ:
+    Username: {{ .Values.rabbitmq.auth.username }}
+    Password: {{ .Values.rabbitmq.auth.password }}
+    Full URL inside cluster: 'amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq/'
+    Full URL from outside: 
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        'amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@$NODE_IP/'
+*************************************************************************************************************************************
+MongoDB:
+    Username: {{ first .Values.mongodb.auth.usernames }}
+    Password: {{ first .Values.mongodb.auth.passwords }}
+    Root Username: {{ .Values.mongodb.auth.rootUser }}
+    Root Password: {{ .Values.mongodb.auth.rootPassword }}
+    Full URL: 'mongodb://{{ first .Values.mongodb.auth.usernames }}:{{ first .Values.mongodb.auth.passwords }}@{{ join "," .Values.mongodb.externalAccess.service.loadBalancerIPs }}/{{ first .Values.mongodb.auth.databases }}'
+*************************************************************************************************************************************
+API:
+    API can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        http://{{ .Release.Name }}-{{ .Values.api.name }}:{{ .Values.api.service.port }}
+    
+    {{- if contains "NodePort" .Values.api.service.type }}
+    API can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        http://$NODE_IP:{{ .Values.api.service.nodePort }}
+    {{- end }}
+*************************************************************************************************************************************
+SPOA:
+    SPOA can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        {{ .Release.Name }}-{{ .Values.spoa.name }}:{{ .Values.spoa.service.port }}
+    
+    {{- if contains "NodePort" .Values.spoa.service.type }}
+    SPOA can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        $NODE_IP:{{ .Values.spoa.service.nodePort }}
+    {{- end }}
+*************************************************************************************************************************************
+K8S Worker:
+    K8S Worker can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        {{ .Release.Name }}-{{ .Values.k8sWorker.name }}:{{ .Values.k8sWorker.service.port }}
+
+    {{- if contains "NodePort" .Values.k8sWorker.service.type }}
+    K8S Worker can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        tcp://$NODE_IP:{{ .Values.k8sWorker.service.nodePort }}
+    {{- end}}
+*************************************************************************************************************************************
+
+{{- include "ms.validateValues" . }}
