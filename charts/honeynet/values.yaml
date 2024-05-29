@@ -1,0 +1,248 @@
+replicaCount: 1 # If auto scale disabled
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+honeynet:
+  namespace: default
+
+tracee:
+  name: tracee
+
+  image: 
+    repository: ""
+    tag: latest
+    imagePullPolicy: Always
+
+  uid: 2000
+
+  agents:
+    - name: logging
+      healthzPort: 3369
+      args:
+        - --output
+        - json:/tmp/tracee/logs/logs.json
+        - --output
+        - option:stack-addresses
+        - --output
+        - option:parse-arguments
+        - --output
+        - option:exec-env
+        - --cache
+        - cache-type=mem
+        - --cache
+        - mem-cache-size=1024
+        - --capabilities
+        - bypass=true
+        - --healthz
+        - --http-listen-addr
+        - 0.0.0.0:3369
+        - --scope
+        - follow
+        - --events
+        - network_events,proc_life,fs_read_write,proc_mem
+      volumeMount:
+        name: tracee-logging
+        mountPath: /tmp/tracee/logs
+        hostPath: /mnt/tracee/logs
+    
+    - name: network
+      healthzPort: 3371
+      args:
+        - --output
+        - none
+        - --cache
+        - cache-type=mem
+        - --cache
+        - mem-cache-size=1024
+        - --capabilities
+        - bypass=true
+        - --healthz
+        - --http-listen-addr
+        - 0.0.0.0:3371
+        - --scope
+        - follow
+        - --capture
+        - network
+        - --capture
+        - pcap-options:filtered
+        - --capture
+        - pcap:container
+        - --capture
+        - pcap-snaplen:max
+        - --capture
+        - dir:/tmp/tracee/network
+
+      volumeMount:
+        name: capture-network
+        mountPath: /tmp/tracee/network
+        hostPath: /mnt/tracee/network
+    
+    - name: memory
+      healthzPort: 3370
+      args:
+        - --output
+        - none
+        - --cache
+        - cache-type=mem
+        - --cache
+        - mem-cache-size=1024
+        - --capabilities
+        - bypass=true
+        - --healthz
+        - --http-listen-addr
+        - 0.0.0.0:3370
+        - --scope
+        - follow
+        - --capture
+        - mem
+        - --capture
+        - dir:/tmp/tracee/memory
+
+      volumeMount:
+        name: capture-memory
+        mountPath: /tmp/tracee/memory
+        hostPath: /mnt/tracee/memory
+
+    - name: exec
+      healthzPort: 3367
+      args:
+        - --output
+        - none
+        - --cache
+        - cache-type=mem
+        - --cache
+        - mem-cache-size=1024
+        - --capabilities
+        - bypass=true
+        - --healthz
+        - --http-listen-addr
+        - 0.0.0.0:3367
+        - --scope
+        - follow
+        - --capture
+        - exec
+        - --capture
+        - dir:/tmp/tracee/exec
+
+      volumeMount:
+        name: capture-exec
+        mountPath: /tmp/tracee/exec
+        hostPath: /mnt/tracee/exec
+
+snapshotter:
+  name: snapshotter
+  port: 9001
+
+  image:
+    repository: ""
+    tag: latest
+    imagePullPolicy: Always
+
+  registry:
+    url: ""
+    project: ""
+    credentials: ""
+
+
+alertmanager:
+  name: alertmanager
+  webhook_url: ""
+
+  image:
+    repository: "quay.io/prometheus/alertmanager"
+    tag: latest
+    imagePullPolicy: Always
+
+  service:
+    type: NodePort
+    port: 9093
+    nodePort: 29093
+
+
+grafana:
+  name: grafana
+
+  image:
+    repository: "docker.io/grafana/grafana"
+    tag: 9.3.6
+    imagePullPolicy: Always
+
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 23000
+  
+  readinessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /login
+      port: 3000
+      scheme: HTTP
+
+prometheus:
+  name: prometheus
+  
+  image:
+    repository: "prom/prometheus"
+    tag: v2.42.0
+    imagePullPolicy: Always
+  
+  service: 
+    type: NodePort
+    port: 9090
+    nodePort: 29090
+
+  timeouts:
+    scrape_interval: 10s
+    scrape_timeout: 10s
+    evaluation_interval: 10s
+  
+  inactivity_window: 15m

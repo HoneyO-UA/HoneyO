@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.alertmanager.name }}
+  labels:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    component: {{ .Values.alertmanager.name }}
+    app.kubernetes.io/component: {{ .Values.alertmanager.name }}
+spec:
+  {{- if not ((.Values.alertmanager.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.alertmanager.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "management-system.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.alertmanager.name }}
+  template:
+    metadata:
+      {{- with .Values.alertmanager.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "honeynet.labels" . | nindent 8 }}
+        component: {{ .Values.alertmanager.name }}
+        app.kubernetes.io/component: {{ .Values.alertmanager.name }}
+        {{- with .Values.alertmanager.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.alertmanager.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "management-system.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.alertmanager.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.alertmanager.name }}"
+          securityContext:
+            {{- toYaml ((.Values.alertmanager.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.alertmanager.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.alertmanager.service.port }}
+              protocol: TCP
+          {{- with .Values.alertmanager.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.alertmanager.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.alertmanager.resources) | default .Values.resources) | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/alertmanager
+              name: config-volume
+              readOnly: true
+          {{- with .Values.alertmanager.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - configMap:
+            name: {{ .Values.alertmanager.name }}
+          name: config-volume
+      {{- with .Values.alertmanager.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.alertmanager.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.alertmanager.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.alertmanager.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

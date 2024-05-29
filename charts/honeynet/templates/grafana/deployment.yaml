@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.grafana.name }}
+  labels:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    component: {{ .Values.grafana.name }}
+    app.kubernetes.io/component: {{ .Values.grafana.name }}
+spec:
+  {{- if not ((.Values.grafana.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.grafana.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "management-system.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.grafana.name }}
+  template:
+    metadata:
+      {{- with .Values.grafana.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "honeynet.labels" . | nindent 8 }}
+        component: {{ .Values.grafana.name }}
+        app.kubernetes.io/component: {{ .Values.grafana.name }}
+        {{- with .Values.grafana.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.grafana.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "management-system.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.grafana.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.grafana.name }}"
+          securityContext:
+            {{- toYaml ((.Values.grafana.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.grafana.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.grafana.service.port }}
+              protocol: TCP
+          env:
+            - name: GF_PATHS_CONFIG
+              value: /configmap/grafana/grafana-config.ini
+            - name: GF_PATHS_PROVISIONING
+              value: /configmap/grafana/provisioning 
+          {{- with .Values.grafana.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.grafana.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.grafana.resources) | default .Values.resources) | nindent 12 }}
+          volumeMounts:
+            - mountPath: /configmap/grafana
+              name: grafana-config
+              readOnly: true
+            - mountPath: /configmap/dashboards/cilium-dashboard
+              name: cilium-dashboard
+              readOnly: true
+            - mountPath: /configmap/dashboards/cilium-operator-dashboard
+              name: cilium-operator-dashboard
+              readOnly: true
+            - mountPath: /configmap/dashboards/hubble-dashboard
+              name: hubble-dashboard
+              readOnly: true
+            - mountPath: /configmap/dashboards/hubble-l7-http-metrics-by-workload
+              name: hubble-l7-http-metrics-by-workload
+              readOnly: true
+          {{- with .Values.grafana.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+              - key: grafana.ini
+                path: grafana-config.ini
+              - key: prometheus-datasource.yaml
+                path: provisioning/datasources/prometheus.yaml
+              - key: config.yaml
+                path: provisioning/dashboards/config.yaml
+            name: grafana-config
+          name: grafana-config
+        - configMap:
+            defaultMode: 420
+            name: grafana-cilium-dashboard
+          name: cilium-dashboard
+        - configMap:
+            defaultMode: 420
+            name: grafana-cilium-operator-dashboard
+          name: cilium-operator-dashboard
+        - configMap:
+            defaultMode: 420
+            name: grafana-hubble-dashboard
+          name: hubble-dashboard
+        - configMap:
+            defaultMode: 420
+            name: grafana-hubble-l7-http-metrics-by-workload
+          name: hubble-l7-http-metrics-by-workload
+      {{- with .Values.grafana.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.grafana.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.grafana.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.grafana.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

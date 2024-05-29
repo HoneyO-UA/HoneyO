@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.alertmanager.name }}
+  labels:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ .Values.alertmanager.name }}
+spec:
+  type: {{ .Values.alertmanager.service.type }}
+  ports:
+    - port: {{ .Values.alertmanager.service.port }}
+      protocol: TCP
+      {{- if contains "NodePort" .Values.alertmanager.service.type }}
+      nodePort: {{ .Values.alertmanager.service.nodePort }}
+      {{- end}}
+  selector:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    component: {{ .Values.alertmanager.name }}

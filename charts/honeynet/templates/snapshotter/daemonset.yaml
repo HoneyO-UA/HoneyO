@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.snapshotter.name }}
+  labels:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ .Values.snapshotter.name }}
+    component: {{ .Values.snapshotter.name }}
+    app.kubernetes.io/component: {{ .Values.snapshotter.name }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "honeynet.labels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ .Values.snapshotter.name }}
+      component: {{ .Values.snapshotter.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "honeynet.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ .Values.snapshotter.name }}
+        component: {{ .Values.snapshotter.name }}
+        app.kubernetes.io/component: {{ .Values.snapshotter.name }}
+    spec:
+      hostPID: true
+      hostNetwork: true
+      containers:
+        - name: {{ .Values.snapshotter.name }}
+          image: {{ .Values.snapshotter.image.repository }}:{{ .Values.snapshotter.image.tag }}
+          imagePullPolicy: {{ .Values.snapshotter.image.imagePullPolicy }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - name: containerd-sock
+            mountPath: /run/containerd/containerd.sock
+            readOnly: true
+          ports:
+            - containerPort: {{ .Values.snapshotter.port }}
+              protocol: TCP
+          env:
+          - name: REGISTRY_URL
+            value: {{ .Values.snapshotter.registry.url }}
+          - name: REGISTRY_PROJECT
+            value: {{ .Values.snapshotter.registry.project }}
+          - name: REGISTRY_CREDS
+            value: {{ .Values.snapshotter.registry.credentials }}
+
+      volumes:
+        - name: containerd-sock
+          hostPath:
+            path: /run/containerd/containerd.sock

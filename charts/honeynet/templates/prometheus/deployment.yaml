@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.prometheus.name }}
+  labels:
+    {{- include "honeynet.labels" . | nindent 4 }}
+    component: {{ .Values.prometheus.name }}
+    app.kubernetes.io/component: {{ .Values.prometheus.name }}
+spec:
+  {{- if not ((.Values.prometheus.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.prometheus.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "management-system.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.prometheus.name }}
+  template:
+    metadata:
+      {{- with .Values.prometheus.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "honeynet.labels" . | nindent 8 }}
+        component: {{ .Values.prometheus.name }}
+        app.kubernetes.io/component: {{ .Values.prometheus.name }}
+        {{- with .Values.prometheus.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.prometheus.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "management-system.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.prometheus.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.prometheus.name }}"
+          securityContext:
+            {{- toYaml ((.Values.prometheus.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.prometheus.image.pullPolicy }}
+          args:
+            - --config.file=/etc/prometheus/prometheus.yaml
+            - --storage.tsdb.path=/prometheus/
+            - --log.level=info
+            - --enable-feature=exemplar-storage
+          ports:
+            - name: http
+              containerPort: {{ .Values.prometheus.service.port }}
+              protocol: TCP
+          {{- with .Values.prometheus.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.prometheus.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.prometheus.resources) | default .Values.resources) | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/prometheus
+              name: config-volume
+              readOnly: true
+            - mountPath: /etc/prometheus-rules
+              name: config-rules-volume
+              readOnly: true
+            - mountPath: /prometheus/
+              name: storage
+          {{- with .Values.prometheus.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      serviceAccount: {{ .Values.prometheus.name }}
+      volumes:
+        - configMap:
+            name: {{ .Values.prometheus.name }}
+          name: config-volume
+        - configMap:
+            name: {{ .Values.prometheus.name }}-rules
+          name: config-rules-volume
+        - emptyDir: {}
+          name: storage
+      {{- with .Values.prometheus.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.prometheus.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.prometheus.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.prometheus.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

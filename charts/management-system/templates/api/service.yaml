@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "management-system.api" . }}
+  name: {{ .Values.api.name }}
   labels:
     {{- include "management-system.labels" . | nindent 4 }}
 spec:
