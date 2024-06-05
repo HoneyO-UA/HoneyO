@@ -1,0 +1,26 @@
+- hosts: all
+
+  tasks:
+    - include_vars: vars.yaml
+
+    - name: Create parent folder in host
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/{{ folder }}"
+        state: directory
+
+    - name: Create Instance ID
+      shell: uuidgen
+      register: instance_uuid
+
+    - set_fact:
+        parent_local_dir: "{{ playbook_dir }}"
+        parent_remote_dir: "{{ ansible_env.HOME }}/{{ folder }}"
+        instanceID: "{{ instance_uuid.stdout }}"
+
+
+- import_playbook: playbooks/client.yaml
+  when: service == 'client'
+- import_playbook: playbooks/server.yaml
+  when: service == 'server'
+- import_playbook: playbooks/umount.yaml
+  when: service == 'umount'

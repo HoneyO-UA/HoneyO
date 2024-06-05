@@ -1,0 +1,7 @@
+folder: glusterfs
+glusterfs_disk: /dev/sdb
+brick_path: /data/brick1
+mount_point_path: /mnt/tracee
+volume_name: gv0
+glusterfs_server: 10.255.37.65
+glusterfs_server_hostname: GlusterFS

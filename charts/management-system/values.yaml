@@ -75,6 +75,11 @@ rabbitmq:
     username: "user"
     password: "rabbitmq"
     securePassword: true
+  
+  service:
+    type: NodePort
+    nodePorts:
+      amqp: 31672
 
 api:
   name: api

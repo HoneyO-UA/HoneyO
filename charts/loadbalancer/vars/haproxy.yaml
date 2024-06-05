@@ -1,0 +1,17 @@
+spoe_config_path: /etc/haproxy/backend-switcher.cfg
+
+frontends:
+  - name: web
+    bind: "*:80"
+
+spoe_backend:
+  name: spoe_backend
+  server_name: spoe_backend_server
+  url: 10.255.37.57:32009
+
+shadows: # Get Shadows Honeypots (already deployed) URLs
+  - name: shadow_80
+    server_name: shadow_80_server
+    url: 10.255.37.62:32225
+
+maxconnrate: 1000

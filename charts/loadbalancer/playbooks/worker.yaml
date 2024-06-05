@@ -1,0 +1,60 @@
+- name: Deploy Haproxy Worker
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/worker.yaml"
+
+    - name: Create Haproxy Worker folder in host
+      file:
+        path: "{{ parent_remote_dir }}/worker"
+        state: directory
+
+    - name: Install Haproxy Worker
+      block:
+        - name: Uninstall Worker packages
+          pip:
+            name: spawner_workers
+            state: absent
+
+        - name: Install Worker packages
+          pip:
+            name: spawner_workers
+            extra_args: -i http://{{ spawner_pip_server_ip }}:{{ spawner_pip_server_port }} --trusted-host {{ spawner_pip_server_ip }}
+
+    - name: Deploy HAProxy Worker
+      block:
+        - name: Copy worker script to host
+          copy:
+            src: "{{ parent_local_dir }}/manifests/worker/{{ item }}"
+            dest: "{{ parent_remote_dir }}/worker/{{ item }}"
+          with_items:
+            ['worker.py', 'backend.tmpl']
+
+        - set_fact:
+            service_exec_path: "{{ parent_remote_dir }}/worker/worker.py"
+  
+        - name: Deactivate HAProxy worker systemd Service
+          systemd:
+            name: "{{ service.name }}"
+            enabled: false
+            state: stopped
+          ignore_errors: yes
+
+        - name: Create Haproxy worker environment file
+          template:
+            src: "{{ parent_local_dir }}/manifests/worker/worker-env.j2"
+            dest: "{{ service.environment_file }}"
+
+        - name: Create Haproxy Worker systemd unit file
+          template:
+            src: "{{ parent_local_dir }}/manifests/worker/worker-service.j2"
+            dest: "{{ service.systemd_path }}/{{ service.name }}"
+
+        - name: Enable Haproxy Worker service
+          systemd:
+            name: "{{ service.name }}"
+            daemon_reload: true
+            enabled: true
+            state: started

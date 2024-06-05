@@ -1,0 +1,11 @@
+- name: Umount glusterfs Volumes
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Umount glusterfs volume instance
+      mount:
+        path: "{{ mount_point_path }}"
+        state: absent
+        fstype: glusterfs

@@ -1,0 +1,60 @@
+- name: Mount a Remote Folder - Server
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Install Glusterfs Server
+      block:
+        - name: Update Cache
+          apt:
+            update_cache: yes
+
+        - name: Install GlusterFS Server packages
+          apt:
+            name: glusterfs-server
+
+    - name: Enable and activate GlusterD Service
+      systemd_service:
+        name: glusterd
+        enabled: true
+        state: started
+
+    - name: Format and mount the bricks (XFS Filesystem)
+      block:
+        - name: Construct XFS File System
+          shell: mkfs.xfs -i size=512 -f {{ glusterfs_disk }}
+
+        - name: Create Brick directory
+          file:
+            path: "{{ brick_path }}"
+            state: directory
+
+        - name: Add entry to /etc/fstab
+          block:
+            - name: Check for volume entry in /etc/fstab
+              shell: grep '{{ glusterfs_disk }} {{ brick_path }} xfs defaults 1 2' /etc/fstab
+              ignore_errors: yes
+              register: volume_duplicated
+
+            - name: Insert volume entry if not exists
+              lineinfile:
+                path: /etc/fstab
+                line: "{{ glusterfs_disk }} {{ brick_path }} xfs defaults 1 2"
+              when: volume_duplicated.rc != 0
+
+        - name: Mount volume
+          shell: mount -a && mount
+
+    - name: Set up GlusterFS Volume
+      block:
+        - name: Create Volume Directory
+          file:
+            path: "{{ brick_path }}/{{ volume_name }}"
+            state: directory
+
+        - name: Create GlusterFS Volume
+          shell: gluster volume create {{ volume_name }} {{ glusterfs_server_hostname }}:{{ brick_path }}/{{ volume_name }}
+
+        - name: Start GlusterFS Volume
+          shell: gluster volume start {{ volume_name }}

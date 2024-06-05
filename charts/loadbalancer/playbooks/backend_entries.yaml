@@ -1,0 +1,30 @@
+- name: Create backend entries for the spawner services
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/backend_entries.yaml"
+
+    - name: Create folder in host
+      file:
+        path: "{{ parent_remote_dir }}/backend_entries"
+        state: directory
+
+    - name: Copy Creation script to host
+      copy:
+        src: "{{ parent_local_dir }}/manifests/backend_entries/{{ item }}"
+        dest: "{{ parent_remote_dir }}/backend_entries/{{ item }}"
+      with_items:
+        ['create_backend_entries.py', 'backend.tmpl']
+
+    - name: Delete Previous Backend entries
+      shell: rm {{ haproxy_conf_path }}/haproxy.d/* || true
+
+    - name: Run Creation Script
+      shell: python3 {{ parent_remote_dir }}/backend_entries/create_backend_entries.py -t {{ parent_remote_dir }}/backend_entries/backend.tmpl -n {{ entries_number }} -p {{ haproxy_conf_path }}/haproxy.d
+
+    - name: Restart Haproxy Instance
+      systemd:
+        name: haproxy.service
+        state: restarted

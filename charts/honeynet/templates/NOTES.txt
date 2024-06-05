@@ -3,4 +3,71 @@ CHART VERSION: {{ .Chart.Version }}
 APP VERSION: {{ .Chart.AppVersion }}
 
 
+Get the list of pods by executing:
+  kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Access the pod you want to debug by executing
+  kubectl exec --namespace {{ .Release.Namespace }} -ti <NAME OF THE POD> -- bash
+
+{{ .Values.tracee.name }}:{{ .Values.tracee.uuid }}
+Available Services
+*************************************************************************************************************************************
+AlertManager:
+    AlertManager can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        http://{{ .Release.Name }}-{{ .Values.alertmanager.name }}:{{ .Values.alertmanager.service.port }}
+
+    {{- if contains "NodePort" .Values.alertmanager.service.type }}
+    API can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        http://$NODE_IP:{{ .Values.alertmanager.service.nodePort }}
+    {{- end }}
+
+Grafana:
+    Grafana can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        http://{{ .Release.Name }}-{{ .Values.grafana.name }}:{{ .Values.grafana.service.port }}
+
+    {{- if contains "NodePort" .Values.grafana.service.type }}
+    Grafana can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        http://$NODE_IP:{{ .Values.grafana.service.nodePort }}
+    {{- end }}
+    
+Prometheus:
+    Prometheus can be accessed within your cluster in `{{ .Release.Namespace }}` namespace:
+        http://{{ .Release.Name }}-{{ .Values.prometheus.name }}:{{ .Values.prometheus.service.port }}
+
+    {{- if contains "NodePort" .Values.prometheus.service.type }}
+    Prometheus can be accessed from outside:
+        export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+        http://$NODE_IP:{{ .Values.prometheus.service.nodePort }}
+    {{- end }}
+
+Snapshotter:
+    Available!
+
+Tracee:
+    Available!
+*************************************************************************************************************************************
+
+Generate a token to communicate with the kube api server (required for the management system).
+Run the following k8s manifest
+
+```secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ include "honeynet.serviceAccountName" . }}-k8sapi-token"
+  annotations:
+    kubernetes.io/service-account.name: "{{ include "honeynet.serviceAccountName" . }}-k8sapi"
+type: kubernetes.io/service-account-token
+```
+
+kubectl apply -f secret.yaml
+
+Obtain secret token:
+    kubectl describe secret "{{ include "honeynet.serviceAccountName" . }}-k8sapi-token" -n {{ .Values.honeynet.namespace }}
+
+
 {{- include "honeynet.validateValues" . }}
+
+

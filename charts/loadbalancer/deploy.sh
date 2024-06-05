@@ -1,0 +1,1 @@
+ansible-playbook --private-key ~/.ssh/it -u ubuntu -i $2 main.yaml -e "service_=$1"

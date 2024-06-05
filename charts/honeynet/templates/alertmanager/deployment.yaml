@@ -12,7 +12,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "management-system.selectorLabels" . | nindent 6 }}
+      {{- include "honeynet.selectorLabels" . | nindent 6 }}
       component: {{ .Values.alertmanager.name }}
   template:
     metadata:
@@ -32,7 +32,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "management-system.serviceAccountName" . }}
+      serviceAccountName: {{ include "honeynet.serviceAccountName" . }}
       securityContext:
         {{- toYaml ((.Values.alertmanager.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
       containers:

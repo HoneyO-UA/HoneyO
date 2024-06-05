@@ -64,9 +64,11 @@ Create the name of the service account to use
 {{/*
 Compile all warnings into a single message, and call fail.
 */}}
-{{- define "ms.validateValues" -}}
+{{- define "honeynet.validateValues" -}}
 {{- $messages := list -}}
 {{- $messages := append $messages (include "honeynet.validateValues.alertmanager" .) -}}
+{{- $messages := append $messages (include "honeynet.validateValues.snapshotter" .) -}}
+{{- $messages := append $messages (include "honeynet.validateValues.tracee" .) -}}
 {{- $messages := without $messages "" -}}
 {{- $message := join "\n" $messages -}}
 
@@ -80,5 +82,34 @@ Compile all warnings into a single message, and call fail.
 {{- if not .Values.alertmanager.webhook_url -}}
 Honeynet: Alertmanager
     Please set the Alertmanager webhook_url host through `alertmanager.webhook_url` to enable unused honeypot deletion
+{{- end -}}
+{{- end -}}
+
+{{/* Validate values of Honeynet - Snapshotter Values  */}}
+{{- define "honeynet.validateValues.snapshotter" -}}
+{{- if not .Values.snapshotter.image.repository -}}
+Honeynet: Snapshotter
+    Please set the snapshotter image repository through `snapshotter.image.repository`
+{{- end -}}
+{{- if not (.Values.snapshotter.registry).url -}}
+Honeynet: Snapshotter
+    Please set the snapshotter registry url through `snapshotter.registry.url` to enable honeypot uploading by setting the snapshots private registry
+{{- end -}}
+{{- if not (.Values.snapshotter.registry).project -}}
+Honeynet: Snapshotter
+    Please set the snapshotter image repository through `snapshotter.registry.project` to enable honeypot uploading by setting the snapshots private registry
+{{- end -}}
+{{- if not (.Values.snapshotter.registry).credentials -}}
+Honeynet: Snapshotter
+    Please set the snapshotter image repository through `snapshotter.registry.credentials` to enable honeypot uploading by setting the snapshots private registry
+{{- end -}}
+{{- end -}}
+
+
+{{/* Validate values of Honeynet - Tracee Values  */}}
+{{- define "honeynet.validateValues.tracee" -}}
+{{- if not .Values.tracee.image.repository -}}
+Honeynet: Snapshotter
+    Please set the tracee image repository through `tracee.image.repository`
 {{- end -}}
 {{- end -}}

@@ -1,0 +1,15 @@
+name: haproxy-worker
+
+service:
+  name: haproxy-worker.service
+  systemd_path: /lib/systemd/system
+  environment_file: /etc/default/haproxy-worker
+  env:
+    HAPROXY_RUNTIME_SOCKET: "{{ haproxy_socket }}"
+    HAPROXY_BACKEND_CONFIG_FOLDER: "{{ haproxy_conf_path }}/haproxy.d"
+    API_URL: "http://10.255.37.57:32000"
+    RABBITMQ_URL: "amqp://user:uzwHr6vFsBUoLfAtzQKbZnesqcBkxisH@10.255.37.57:31672/"
+    BACKEND_TEMPLATE_FILE: "{{ parent_remote_dir }}/worker/backend.tmpl"
+    LOG_FILE: "{{ parent_remote_dir }}/worker/worker.log"
+    SLACK_BOT_TOKEN: "..."
+    SLACK_LOG_FILE: "{{ parent_remote_dir }}/worker/slack.log"

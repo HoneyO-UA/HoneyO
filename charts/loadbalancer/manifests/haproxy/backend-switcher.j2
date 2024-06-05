@@ -1,0 +1,15 @@
+[backend-switcher]
+spoe-agent backend-switcher
+    messages get-backend
+    option var-prefix backendSwi
+    timeout hello 500ms
+    timeout idle  30s
+    timeout processing 200ms
+    maxconnrate {{ maxconnrate }}
+    use-backend {{ spoe_backend.name }}
+    log global
+
+spoe-message get-backend
+    args client=src port=dst_port
+    event on-frontend-tcp-request
+

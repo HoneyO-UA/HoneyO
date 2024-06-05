@@ -1,0 +1,57 @@
+- name: Mount a Remote Folder - Client
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Install Glusterfs Client
+      block:
+        - name: Update Cache
+          apt:
+            update_cache: yes
+
+        - name: Install GlusterFS Client packages
+          apt:
+            name: glusterfs-client
+
+    - name: Create Mount directory in host
+      file:
+        path: "{{ mount_point_path }}"
+        state: directory
+
+    - name: Create a volume entry in /etc/fstab
+      block:
+        - name: Check for entry in /etc/fstab
+          shell: grep '{{ glusterfs_server }}:/{{ volume_name }} {{ mount_point_path }} glusterfs defaults,_netdev 0 0' /etc/fstab
+          register: volume_duplicated
+          ignore_errors: yes
+
+        - name: Insert volume entry if not exists
+          lineinfile:
+            path: /etc/fstab
+            line: "{{ glusterfs_server }}:/{{ volume_name }} {{ mount_point_path }} glusterfs defaults,_netdev 0 0"
+          when: volume_duplicated.rc != 0
+
+    - name: Specify GlusterFS Server Domain
+      block:
+        - name: Make /etc/hosts writable
+          shell: chattr -i /etc/hosts
+
+        - name: Modify /etc/hosts
+          block:
+            - name: Check for DNS entry in /etc/hosts
+              shell: grep '{{ glusterfs_server }} {{ glusterfs_server_hostname }}' /etc/hosts
+              register: dns_duplicated
+              ignore_errors: yes
+
+            - name: Insert GlusterFS Server DNS entry if not exists
+              lineinfile:
+                path: /etc/hosts
+                line: "{{ glusterfs_server }} {{ glusterfs_server_hostname }}"
+              when: dns_duplicated.rc != 0
+
+        - name: Make /etc/hosts unwritable
+          shell: chattr +i /etc/hosts
+
+    - name: Mount the volume
+      shell: mount -a

@@ -1,0 +1,32 @@
+global
+    maxconn     20000
+    log         127.0.0.1 local0
+    user        haproxy
+    chroot      /var/lib/haproxy
+    pidfile     /run/haproxy.pid
+    daemon
+    stats socket {{ haproxy_socket }} user haproxy group haproxy mode 660 level admin expose-fd listeners
+
+{% for f in frontends %}
+frontend {{ f.name }}
+  mode tcp
+  bind {{ f.bind }}
+  option tcplog
+  filter spoe engine backend-switcher config {{ spoe_config_path }}
+  use_backend %[var(sess.backendSwi.backend)]
+{% endfor %}
+
+
+backend {{ spoe_backend.name }}
+  mode tcp
+  timeout connect 5s
+  timeout server  3m
+  server {{ spoe_backend.server_name }} {{ spoe_backend.url }}
+
+
+{% for b in shadows %}
+backend {{ b.name }}
+  mode tcp
+  server {{ b.server_name }} {{ b.url }}
+{% endfor %}
+

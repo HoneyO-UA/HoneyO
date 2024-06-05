@@ -1,0 +1,5 @@
+folder: haproxy
+haproxy_conf_path: /etc/haproxy
+haproxy_socket: /var/run/haproxy.sock
+spawner_pip_server_ip: 10.255.37.57
+spawner_pip_server_port: 32222

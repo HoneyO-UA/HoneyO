@@ -62,7 +62,7 @@ Create the name of the service account to use
 {{- end }}
 
 {{- define "management-system.api" -}}
-  {{- printf "%s-api" (include "management-system.fullname" .) (include "management-system.fullname" .)-}}
+  {{- printf "%s-api" (include "management-system.fullname" .) -}}
 {{- end -}}
 
 

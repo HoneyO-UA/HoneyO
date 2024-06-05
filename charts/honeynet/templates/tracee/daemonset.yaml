@@ -24,19 +24,28 @@ spec:
       serviceAccountName: {{ .Values.tracee.name }}
       hostPID: true
       securityContext: {}
+      initContainers:
+      {{- range $agent := .Values.tracee.agents }}
+        - name: "{{ $.Values.tracee.name }}-{{ $agent.name }}-init"
+          image: busybox
+          command: ['sh', '-c', 'mkdir -p "{{ $agent.volumeMount.mountPath }}"']
+          volumeMounts:
+            - name: {{ $agent.volumeMount.name }}
+              mountPath: {{ $agent.volumeMount.mountPath }}
+      {{- end }}
       containers:
-      {{- range $agent := .Values.agents }}
-        - name: "{{ .Values.tracee.name }}-{{ $agent.name }}"
+      {{- range $agent := .Values.tracee.agents }}
+        - name: "{{ $.Values.tracee.name }}-{{ $agent.name }}"
           command:
             - /tracee/tracee
           args:
             {{- range $arg:= $agent.args}}
-            - $arg
+            - {{ $arg }}
             {{- end}}
             - --scope
-            - uid={{ .Values.tracee.uuid }}
-          image: {{ .Values.tracee.image.repository }}:{{.Values.tracee.image.tag }}
-          imagePullPolicy: {{ .Values.tracee.image.imagePullPolicy }}
+            - uid={{ $.Values.tracee.uid }}
+          image: {{ $.Values.tracee.image.repository }}:{{ $.Values.tracee.image.tag }}
+          imagePullPolicy: {{ $.Values.tracee.image.imagePullPolicy }}
           env:
             - name: LIBBPFGO_OSRELEASE_FILE
               value: /etc/os-release-host
@@ -103,8 +112,8 @@ spec:
       - name: docker-sock
         hostPath:
           path: /var/run/docker.sock
-      {{- range $agent := .Values.agents }}
-      - name: $agent.volumeMount.name
+      {{- range $agent := .Values.tracee.agents }}
+      - name: {{ $agent.volumeMount.name }}
         hostPath:
-          path: $agent.volumeMount.hostPath
+          path: {{ $agent.volumeMount.hostPath }}
       {{- end}}

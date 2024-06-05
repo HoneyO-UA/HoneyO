@@ -54,7 +54,7 @@ honeynet:
   namespace: default
 
 tracee:
-  name: tracee
+  name: "tracee"
 
   image: 
     repository: ""
@@ -62,7 +62,7 @@ tracee:
     imagePullPolicy: Always
 
   uid: 2000
-
+  
   agents:
     - name: logging
       healthzPort: 3369
@@ -204,7 +204,7 @@ alertmanager:
   service:
     type: NodePort
     port: 9093
-    nodePort: 29093
+    nodePort: 31093
 
 
 grafana:
@@ -218,7 +218,7 @@ grafana:
   service:
     type: NodePort
     port: 3000
-    nodePort: 23000
+    nodePort: 31300
   
   readinessProbe:
     failureThreshold: 3
@@ -238,7 +238,7 @@ prometheus:
   service: 
     type: NodePort
     port: 9090
-    nodePort: 29090
+    nodePort: 31990
 
   timeouts:
     scrape_interval: 10s

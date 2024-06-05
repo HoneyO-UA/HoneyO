@@ -1,0 +1,10 @@
+name: haproxy-watchdog
+
+service:
+  name: haproxy-watchdog.service
+  systemd_path: /lib/systemd/system
+  environment_file: /etc/default/haproxy-watchdog
+  env:
+    API_URL: "http://10.255.37.57:32000"
+    HAPROXY_BACKEND_CONFIG_FOLDER: "{{ haproxy_conf_path }}/haproxy.d"
+    LOG_FILE: "{{ parent_remote_dir }}/watchdog/wdog.log"

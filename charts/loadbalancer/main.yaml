@@ -1,0 +1,23 @@
+- hosts: all
+
+  tasks:
+    - include_vars: vars.yaml
+
+    - name: Create parent folder in host
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/{{ folder }}"
+        state: directory
+
+    - set_fact:
+        parent_local_dir: "{{ playbook_dir }}"
+        parent_remote_dir: "{{ ansible_env.HOME }}/{{ folder }}"
+
+
+- import_playbook: playbooks/haproxy.yaml
+  when: service_ == 'haproxy'
+- import_playbook: playbooks/worker.yaml
+  when: service_ == 'worker'
+- import_playbook: playbooks/watchdog.yaml
+  when: service_ == 'watchdog'
+- import_playbook: playbooks/backend_entries.yaml
+  when: service_ == 'backend_entries'

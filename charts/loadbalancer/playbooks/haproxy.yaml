@@ -1,0 +1,58 @@
+- name: Deploy HAProxy
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/haproxy.yaml"
+
+    - name: Install Haproxy
+      block:
+        - name: Add Apt-Repository
+          apt_repository:
+            repo: ppa:vbernat/haproxy-2.8
+
+        - name: Update Cache
+          apt:
+            update_cache: yes
+
+        - name: Install Haproxy
+          apt:
+            name: haproxy
+
+    - name: Create haproxy.d folder in host
+      file:
+        path: "{{ haproxy_conf_path }}/haproxy.d"
+        state: directory
+
+    - name: Edit service configuration file to include the haproxy.d directory
+      block:
+        - name: Get FragmentPath of haproxy.service
+          shell: systemctl show -P FragmentPath haproxy.service
+          register: fragment_path
+
+        - name: Change Service configuration file
+          ini_file:
+            path: "{{ fragment_path.stdout }}"
+            section: Service
+            option: ExecStart
+            value: /usr/sbin/haproxy -Ws -f $CONFIG -p $PIDFILE $EXTRAOPTS -f {{ haproxy_conf_path }}/haproxy.d
+            backup: yes
+
+    - name: Copy and generate HAProxy config files
+      template:
+        src: "{{ parent_local_dir }}/manifests/haproxy/{{ item }}.j2"
+        dest: "{{ haproxy_conf_path }}/{{ item }}.cfg"
+      with_items:
+        - ['backend-switcher', 'haproxy']
+
+    - name: Enable haproxy systemctl service
+      systemd_service:
+        name: haproxy
+        enabled: true
+        state: started
+
+    - name: Restart Haproxy Instance
+      systemd:
+        name: haproxy.service
+        state: restarted

@@ -1,6 +1,6 @@
 # HoneyO Installation
 
-## 1. Utils packages
+## 1. Utils packages (Helm Chart)
 
 To correctly install the HoneyO solution, certain services and packages must be pre-installed. You have the flexibility to install these packages manually or use different software, as long as they meet the requirements of the HoneyO solution. For convenience, we provide a Helm chart that will automatically install all the necessary pre-requisites.
 
@@ -72,16 +72,68 @@ cd scripts
 ```
 
 
-## 2. Pypi server to expose required python packages
+## 2. Pypi server to expose required python packages (Helm Chart)
 
 ```bash
 helm install pypi-server charts/pypi-server --namespace utils --create-namespace -f values/pypi-server-values.yaml
 ```
 
-## 3. Management System
+## 3. Install GlusterFS in the honeynet k8s cluster (Ansible playbooks)
 
+Change glusterfs/vars.yaml accordingly before executing the playbooks
+
+### Install GlusterFS Server
 ```bash
-
+cd glusterfs && ./deploy.sh server 10.255.37.65,
+# ./deploy.sh server <glusterfs_server_ip>
 ```
 
 
+### Mount Remote FileSystem in k8s cluster nodes for tracee storage
+```bash
+cd glusterfs && ./deploy.sh client 10.255.37.64,10.255.37.63,10.255.37.62,
+# ./deploy.sh client <Honeynet k8s nodes IP>
+```
+
+
+## 4. Install required services for the honeynet k8s cluster (Helm Chart)
+```bash
+helm install honeynet honeynet -f honeynet-values.yaml -n honeynet --create-namespace
+```
+
+
+## 5. Install Management System in another k8s cluster (Helm Chart)
+```bash
+helm install ms ms -f ms-values.yaml -n ms --create-namespace
+```
+
+### Upload honeypots k8s manifest 
+  See https://github.com/HoneyO-UA/Honeypots 
+
+## 6. Install Haproxy and required services for the loadBalancer (Ansible playbooks)
+
+Change glusterfs/vars.yaml and glusterfs/vars/*.yaml accordingly before executing the playbooks
+
+### Install HAProxy
+```bash
+cd loadbalancer && ./deploy.sh haproxy 10.255.37.61,
+# ./deploy.sh haproxy <Load balancer VM IP>
+```
+
+### Install Haproxy Config file watchdog
+```bash
+cd loadbalancer && ./deploy.sh watchdog 10.255.37.61,
+# ./deploy.sh watchdog <Load balancer VM IP>
+```
+
+### Install Haproxy network rules worker
+```bash
+cd loadbalancer && ./deploy.sh worker 10.255.37.61,
+# ./deploy.sh worker <Load balancer VM IP>
+```
+
+### Create backend entries to be assigned to the honeypots
+```bash
+cd loadbalancer && ./deploy.sh backend_entries 10.255.37.61,
+# ./deploy.sh backend_entries <Load balancer VM IP>
+```

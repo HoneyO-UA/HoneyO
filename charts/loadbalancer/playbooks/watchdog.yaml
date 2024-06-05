@@ -1,0 +1,60 @@
+- name: Deploy Haproxy Configuration Watchdog
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/watchdog.yaml"
+
+    - name: Create Haproxy Configuration Watchdog folder in host
+      file:
+        path: "{{ parent_remote_dir }}/watchdog"
+        state: directory
+
+    - name: Install Haproxy Configuration Watchdog
+      block:
+        - name: Uninstall Haproxy Configuration Watchdog packages
+          pip:
+            name: spawner_watchdog
+            state: absent
+
+        - name: Install Haproxy Configuration Watchdog packages
+          pip:
+            name: spawner_watchdog
+            extra_args: -i http://{{ spawner_pip_server_ip }}:{{ spawner_pip_server_port }} --trusted-host {{ spawner_pip_server_ip }}
+
+    - name: Deploy Haproxy Configuration Watchdog
+      block:
+        - name: Copy Watchdog script to host
+          copy:
+            src: "{{ parent_local_dir }}/manifests/watchdog/{{ item }}"
+            dest: "{{ parent_remote_dir }}/watchdog/{{ item }}"
+          with_items:
+            ['wdog.py']
+
+        - set_fact:
+            service_exec_path: "{{ parent_remote_dir }}/watchdog/wdog.py"
+
+        - name: Deactivate Haproxy Configuration Watchdog systemd Service
+          systemd:
+            name: "{{ service.name }}"
+            enabled: false
+            state: stopped
+          ignore_errors: yes
+
+        - name: Create Haproxy Configuration Watchdog environment file
+          template:
+            src: "{{ parent_local_dir }}/manifests/watchdog/watchdog-env.j2"
+            dest: "{{ service.environment_file }}"
+
+        - name: Create Haproxy Configuration Watchdog systemd unit file
+          template:
+            src: "{{ parent_local_dir }}/manifests/watchdog/watchdog-service.j2"
+            dest: "{{ service.systemd_path }}/{{ service.name }}"
+
+        - name: Enable Haproxy Configuration Watchdog service
+          systemd:
+            name: "{{ service.name }}"
+            daemon_reload: true
+            enabled: true
+            state: started
