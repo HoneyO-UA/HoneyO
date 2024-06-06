@@ -1,0 +1,60 @@
+- name: Deploy Logstash agent
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/logstash.yaml"
+
+    - name: Create Logstash folder in host
+      file:
+        path: "{{ parent_remote_dir }}/logstash"
+        state: directory
+
+    - name: Install Logstash package
+      block:
+        - name: Download and install the Public Signing Key
+          shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --batch --yes --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+
+        - name: Install apt-transport-https
+          apt:
+            name: apt-transport-https
+
+        - name: Save the repository definition to sources.list
+          shell: echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" |  tee -a /etc/apt/sources.list.d/elastic-8.x.list
+
+        - name: Update apt cache
+          apt:
+            update_cache: true
+
+        - name: Install logstash packages
+          apt:
+            name: logstash
+
+    - name: Create and deploy Logstash systemd Service
+      block:
+        - name: Disable Logstash agent systemd service
+          systemd:
+            name: "{{ service.name }}"
+            enabled: false
+            state: stopped
+          ignore_errors: yes
+
+        - name: Copy logstash configuration to host
+          copy:
+            src: "{{ parent_local_dir }}/manifests/logstash/{{ item }}"
+            dest: "{{ service.path }}/{{ item }}"
+          with_items:
+            ['pipelines.yml', 'conf.d/logstash.conf', 'conf.d/http_input.conf', 'template.json', 'iprep.yaml']
+
+        - name: Copy and generate environment file
+          template:
+            src: "{{ parent_local_dir }}/manifests/logstash/logstash-env.j2"
+            dest: "{{ service.environment_file }}/logstash"
+
+        - name: Enable Tshark service
+          systemd:
+            name: "{{ service.name }}"
+            daemon_reload: true
+            enabled: true
+            state: started

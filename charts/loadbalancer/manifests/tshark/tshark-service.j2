@@ -1,0 +1,13 @@
+[Unit]
+Description=Tshark monitoring agent
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+User=root
+Type=simple
+Restart=always
+ExecStart=/usr/bin/bash {{ service_exec_path }}
+
+[Install]
+WantedBy=multi-user.target

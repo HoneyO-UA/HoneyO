@@ -1,0 +1,9 @@
+service:
+  name: tshark.service
+  systemd_path: /lib/systemd/system
+  output_folder: /tshark
+  pcap_file: dump.pcap
+  ek_file: packets.json
+  network_interface: eth0
+  snaplen: 64 # Just enough to capture ip and ports
+  filter: "tcp port 80"

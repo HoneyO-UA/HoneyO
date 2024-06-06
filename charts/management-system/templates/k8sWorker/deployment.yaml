@@ -49,7 +49,7 @@ spec:
             - name: RABBITMQ_URL
               value: "amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq/"
             - name: API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.api.name }}:{{ .Values.api.service.port }}"
+              value: "http://{{ .Values.api.name }}:{{ .Values.api.service.port }}"
             - name: KUBERNETES_HOST
               value: "{{ ((.Values.honeynet).k8s).host }}"
             - name: KUBERNETES_TOKEN

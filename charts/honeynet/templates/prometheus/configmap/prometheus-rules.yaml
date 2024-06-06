@@ -8,7 +8,7 @@ data:
     - name: alert.rules
       rules:
       - alert: InactivityWindowReached
-        expr: container_network_receive_bytes_total{namespace="{{ .Values.honeynet.namespace }}"} - (container_network_receive_bytes_total{namespace="{{ .Values.honeynet.namespace }}"} offset {{ .Values.prometheus.inactivity_window }}) == 0
+        expr: container_network_receive_bytes_total{namespace="{{ .Values.honeynet.namespace }}", pod!~".*shadow.*"} - (container_network_receive_bytes_total{namespace="{{ .Values.honeynet.namespace }}", pod!~".*shadow.*"} offset {{ .Values.prometheus.inactivity_window }}) == 0
         for: 1m
         labels:
           severity: "critical"

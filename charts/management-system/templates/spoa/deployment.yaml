@@ -47,7 +47,7 @@ spec:
               protocol: TCP
           env:
             - name: API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.api.name }}:{{ .Values.api.service.port }}"
+              value: "http://{{ .Values.api.name }}:{{ .Values.api.service.port }}"
           {{- with .Values.spoa.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

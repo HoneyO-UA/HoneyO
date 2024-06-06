@@ -21,3 +21,7 @@
   when: service_ == 'watchdog'
 - import_playbook: playbooks/backend_entries.yaml
   when: service_ == 'backend_entries'
+- import_playbook: playbooks/tshark.yaml
+  when: service_ == 'tshark'
+- import_playbook: playbooks/logstash.yaml
+  when: service_ == 'logstash'

@@ -1,0 +1,52 @@
+- name: Deploy Tshark
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+    - include_vars: "{{ parent_local_dir }}/vars/tshark.yaml"
+
+    - name: Create Tshark folder in host
+      file:
+        path: "{{ parent_remote_dir }}/tshark"
+        state: directory
+
+    - name: Install Tshark packages
+      apt:
+        name: tshark
+
+    - name: Create and deploy Tshark systemd Service
+      block:
+        - name: Disable Tshark agent systemd service
+          systemd:
+            name: "{{ service.name }}"
+            enabled: false
+            state: stopped
+          ignore_errors: yes
+
+        - name: Copy Tshark init service script
+          block:
+            - name: Copy script to host
+              template:
+                src: "{{ parent_local_dir }}/manifests/tshark/tshark.j2"
+                dest: "{{ parent_remote_dir }}/tshark/tshark.sh"
+
+            - name: Make Script executable
+              file:
+                path: "{{ parent_remote_dir }}/tshark/tshark.sh"
+                mode: "+x"
+
+        - set_fact:
+            service_exec_path: "{{ parent_remote_dir }}/tshark/tshark.sh"
+
+        - name: Create Tshark systemd unit file
+          template:
+            src: "{{ parent_local_dir }}/manifests/tshark/tshark-service.j2"
+            dest: "{{ service.systemd_path }}/{{ service.name }}"
+
+        - name: Enable Tshark service
+          systemd:
+            name: "{{ service.name }}"
+            daemon_reload: true
+            enabled: true
+            state: started

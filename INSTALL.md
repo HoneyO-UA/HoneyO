@@ -137,3 +137,19 @@ cd loadbalancer && ./deploy.sh worker 10.255.37.61,
 cd loadbalancer && ./deploy.sh backend_entries 10.255.37.61,
 # ./deploy.sh backend_entries <Load balancer VM IP>
 ```
+Wait a few minutes to ensure that every backend entry is stored in the management system
+
+## 7. Install monitoring agents in loadBalancer
+
+### Create Elastic Search, Map View and Kibana services
+```bash
+
+```
+
+### Install monitoring agents at loadBalancer
+```bash
+cd loadbalancer && ./deploy.sh tshark 10.255.37.61,
+# ./deploy.sh tshark <Load balancer VM IP>
+cd loadbalancer && ./deploy.sh logstash 10.255.37.61,
+# ./deploy.sh logstash <Load balancer VM IP>
+```

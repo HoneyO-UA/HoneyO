@@ -1,0 +1,1 @@
+tshark -w {{ service.output_folder }}/{{ service.pcap_file }} -i {{ service.network_interface }} -f "{{ service.filter }}" -s {{ service.snaplen }} -T ek > {{ service.output_folder }}/{{ service.ek_file }}

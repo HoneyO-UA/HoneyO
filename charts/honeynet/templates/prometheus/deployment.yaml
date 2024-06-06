@@ -32,7 +32,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "honeynet.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.prometheus.name }}
       securityContext:
         {{- toYaml ((.Values.prometheus.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
       containers:
