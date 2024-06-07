@@ -44,6 +44,7 @@ kubectl apply -f ip-assignment.yaml -n utils
   - honeyo
   - ms
   - snapshots
+  - services (where the honeypots container images are, check https://github.com/HoneyO-UA/Honeypots)
 
 2. Download container images
 ```bash
