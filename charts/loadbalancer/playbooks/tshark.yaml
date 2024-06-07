@@ -15,6 +15,9 @@
       apt:
         name: tshark
 
+    - name: Create tshark folder
+      shell: mkdir -p {{ service.output_folder }}
+
     - name: Create and deploy Tshark systemd Service
       block:
         - name: Disable Tshark agent systemd service

@@ -9,7 +9,7 @@ Get the list of pods by executing:
 Access the pod you want to debug by executing
   kubectl exec --namespace {{ .Release.Namespace }} -ti <NAME OF THE POD> -- bash
 
-{{ .Values.tracee.name }}:{{ .Values.tracee.uuid }}
+
 Available Services
 *************************************************************************************************************************************
 AlertManager:
@@ -17,7 +17,7 @@ AlertManager:
         http://{{ .Release.Name }}-{{ .Values.alertmanager.name }}:{{ .Values.alertmanager.service.port }}
 
     {{- if contains "NodePort" .Values.alertmanager.service.type }}
-    API can be accessed from outside:
+    AlertManager can be accessed from outside:
         export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
         http://$NODE_IP:{{ .Values.alertmanager.service.nodePort }}
     {{- end }}

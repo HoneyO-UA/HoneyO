@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.map.data.name }}
+  labels:
+    {{- include "emk.labels" . | nindent 4 }}
+    component: {{ .Values.map.data.name }}
+    app.kubernetes.io/component: {{ .Values.map.data.name }}
+spec:
+  {{- if not ((.Values.map.data.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.map.data.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "emk.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.map.data.name }}
+  template:
+    metadata:
+      {{- with .Values.map.data.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "emk.labels" . | nindent 8 }}
+        component: {{ .Values.map.data.name }}
+        app.kubernetes.io/component: {{ .Values.map.data.name }}
+        {{- with .Values.map.data.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.map.data.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "emk.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.map.data.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.map.data.name }}"
+          securityContext:
+            {{- toYaml ((.Values.map.data.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.map.data.image.repository }}:{{ .Values.map.data.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.map.data.image.pullPolicy }}
+          env:
+            - name: ES_HOST
+              value: http://{{ .Values.es.name }}:9200
+            - name: REDIS_HOST
+              value: {{ .Release.Name }}-redis-master
+          {{- with .Values.map.data.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.map.data.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.map.data.resources) | default .Values.resources) | nindent 12 }}
+          {{- with .Values.map.data.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.map.data.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.map.data.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.map.data.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.map.data.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

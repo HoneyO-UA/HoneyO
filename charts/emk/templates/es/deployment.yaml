@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.es.name }}
+  labels:
+    {{- include "emk.labels" . | nindent 4 }}
+    component: {{ .Values.es.name }}
+    app.kubernetes.io/component: {{ .Values.es.name }}
+spec:
+  {{- if not ((.Values.es.autoscaling).enabled | default .Values.autoscaling.enabled)}}
+  replicas: {{ (.Values.es.replicaCount) | default .Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "emk.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.es.name }}
+  template:
+    metadata:
+      {{- with .Values.es.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "emk.labels" . | nindent 8 }}
+        component: {{ .Values.es.name }}
+        app.kubernetes.io/component: {{ .Values.es.name }}
+        {{- with .Values.es.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.es.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "emk.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml ((.Values.es.podSecurityContext) | default .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: "{{ .Values.es.name }}"
+          securityContext:
+            {{- toYaml ((.Values.es.securityContext) | default .Values.securityContext) | nindent 12 }}
+          image: "{{ .Values.es.image.repository }}:{{ .Values.es.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.es.image.pullPolicy }}
+          ports:
+            - name: "{{ .Values.es.name }}-rest"
+              containerPort: 9200
+            - name: "{{ .Values.es.name }}-infra"
+              containerPort: 9300
+          env:
+            - name: discovery.type
+              value: "single-node"
+            - name: xpack.security.enabled
+              value: 'false'
+            - name: xpack.security.transport.ssl.enabled
+              value: 'false'
+            - name: xpack.security.http.ssl.enabled
+              value: 'false'
+          {{- with .Values.es.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.es.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ((.Values.es.resources) | default .Values.resources) | nindent 12 }}
+          volumeMounts:
+            - name: "{{ .Values.es.name }}-data"
+              mountPath: /usr/share/elasticsearch/data
+          {{- with .Values.es.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: "{{ .Values.es.name }}-data"
+          persistentVolumeClaim:
+            claimName: "{{ .Values.es.name }}-pvc"
+      {{- with .Values.es.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.es.nodeSelector) | default .Values.nodeSelector) }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.es.affinity) | default .Values.affinity) }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with ((.Values.es.tolerations) | default .Values.tolerations) }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

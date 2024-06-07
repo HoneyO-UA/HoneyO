@@ -186,6 +186,8 @@ snapshotter:
     tag: latest
     imagePullPolicy: Always
 
+  containerd_sock_path: "/run/containerd/containerd.sock"
+
   registry:
     url: ""
     project: ""

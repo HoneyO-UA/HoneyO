@@ -60,3 +60,35 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Compile all warnings into a single message, and call fail.
+*/}}
+{{- define "emk.validateValues" -}}
+{{- $messages := list -}}
+{{- $messages := append $messages (include "emk.validateValues.mapData" .) -}}
+{{- $messages := append $messages (include "emk.validateValues.mapWeb" .) -}}
+{{- $messages := without $messages "" -}}
+{{- $message := join "\n" $messages -}}
+
+{{- if $message -}}
+{{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Validate values of EMK - Map Data Values  */}}
+{{- define "emk.validateValues.mapData" -}}
+{{- if not .Values.map.data.image.repository -}}
+EMK: Map Data
+    Please set the Map Data image repository through `map.data.image.repository`
+{{- end -}}
+{{- end -}}
+
+
+{{/* Validate values of EMK - Map Web Values  */}}
+{{- define "emk.validateValues.mapWeb" -}}
+{{- if not .Values.map.web.image.repository -}}
+EMK: Map Web
+    Please set the Map Web image repository through `map.web.image.repository`
+{{- end -}}
+{{- end -}}

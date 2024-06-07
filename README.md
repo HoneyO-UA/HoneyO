@@ -7,3 +7,4 @@ Mudar honeypots
 -> Criar os Shadow honeypots
 -> Meter as regras de rede dos shadow honeypots no loadBalancer
 -> Mudar a query do tshark 
+-> Mudar as configs do logstash tambem

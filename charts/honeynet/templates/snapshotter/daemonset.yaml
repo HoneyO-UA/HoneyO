@@ -31,7 +31,7 @@ spec:
             privileged: true
           volumeMounts:
           - name: containerd-sock
-            mountPath: /run/containerd/containerd.sock
+            mountPath: "/run/containerd/containerd.sock"
             readOnly: true
           ports:
             - containerPort: {{ .Values.snapshotter.port }}
@@ -47,4 +47,4 @@ spec:
       volumes:
         - name: containerd-sock
           hostPath:
-            path: /run/containerd/containerd.sock
+            path: {{ .Values.snapshotter.containerd_sock_path }}

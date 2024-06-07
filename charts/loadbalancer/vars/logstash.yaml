@@ -4,7 +4,7 @@ service:
   environment_file: /etc/default
   env:
     LOGSTASH_INPUT_PATH: /tshark/packets.json
-    ES_HOST: 10.255.37.53
+    ES_HOST: 10.255.37.57:31920
     EXTERNAL_IP: 193.136.92.1
-    INTERNAL_IP: 10.255.37.49
+    INTERNAL_IP: 10.255.37.61
     HOSTNAME: "{{ ansible_hostname }}"

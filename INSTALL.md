@@ -101,6 +101,16 @@ cd glusterfs && ./deploy.sh client 10.255.37.64,10.255.37.63,10.255.37.62,
 helm install honeynet honeynet -f honeynet-values.yaml -n honeynet --create-namespace
 ```
 
+Create a Token secret to communicate with the kube api server (required for the Management system)
+
+Default honeynet namespace is **default**, if you are deploying the honeypots in another namespace change the namespace fields in the provided k8s manifests
+```bash
+kubectl apply -f https://github.com/HoneyO-UA/HoneyO/releases/download/v1.0.0/secret.yaml
+
+# Get token
+kubectl describe secrets honeynet-k8sapi-token
+```
+
 
 ## 5. Install Management System in another k8s cluster (Helm Chart)
 ```bash
@@ -143,7 +153,15 @@ Wait a few minutes to ensure that every backend entry is stored in the managemen
 
 ### Create Elastic Search, Map View and Kibana services
 ```bash
+helm install emk emk -f emk-values.yaml -n emk --create-namespace
+```
 
+Upload kibana data views to create all the necessary dashboards
+```bash
+wget "https://github.com/HoneyO-UA/HoneyO/releases/download/v1.0.0/kibana.zip"
+7z x kibana.zip
+curl -X POST "http:<kibana_url>/api/saved_objects/_import" -F "file=@dashboard.ndjson" -H "kbn-xsrf: true"
+curl -X POST "http:<kibana_url>/api/saved_objects/_import" -F "file=@live-map.ndjson" -H "kbn-xsrf: true"
 ```
 
 ### Install monitoring agents at loadBalancer

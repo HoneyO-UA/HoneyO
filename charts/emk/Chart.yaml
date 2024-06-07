@@ -1,6 +1,6 @@
 apiVersion: v2
 name: emk
-description: A Helm chart for Kubernetes
+description: Helm chart to install Elastic Search, Kibana and Web Map view for HoneyO
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,3 +22,9 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
+dependencies:
+  - name: "redis"
+    version: "19.5.2"
+    repository: "https://charts.bitnami.com/bitnami"
+
